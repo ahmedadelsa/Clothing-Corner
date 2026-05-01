@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Clothing Corner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+  body {
+    visibility: hidden;
+  }
+
+  body.app-loaded {
+    visibility: visible;
+  }
+</style>
+  <script type="module" src="./assets/js/main.js"></script>
+</head>
+
+<body class="font-sans text-gray-800">
+
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+  <div class="container-fluid px-0">
+    <a class="navbar-brand" href="index.html">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+        <span style="letter-spacing: .12rem;">Clothing Corner</span>
+        <span>Store</span>
+      </span>
+    </a>
+
+<div class="mobile-nav-scroll">
+  <ul class="navbar-nav flex-row gap-3">
+    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+    <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+    <li class="nav-item" id="adminNav" style="display:none;">
+      <a class="nav-link" href="admin.html">Admin</a>
+    </li>
+  </ul>
+</div>
+
+    <div class="d-flex align-items-center gap-3 flex-wrap" id="authArea"></div>
+  </div>
+</nav>
+
+<main>
+  <section class="py-lg-8 py-5 text-center">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-6">
+          <h1 class="display-5 mb-3">Checkout</h1>
+          <p class="text-muted lead">Enter your shipping details, then continue to secure payment.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-lg-8 py-5">
+    <div class="container">
+      <div id="messageBox"></div>
+
+      <div class="row g-4 justify-content-center">
+        <div class="col-lg-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h3 class="h5 mb-4">Shipping Information</h3>
+
+              <form id="checkoutForm">
+                <div class="mb-3">
+                  <label class="form-label">Shipping Address</label>
+                  <input type="text" id="shippingAddress" class="form-control" placeholder="Cairo, Egypt" required />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Phone Number</label>
+                  <input type="text" id="phoneNumber" class="form-control" placeholder="01000000000" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  Continue to Payment
+                </button>
+              </form>
+
+              <a href="cart.html" class="btn btn-outline-primary w-100 mt-3">Back to Cart</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h3 class="h5 mb-4">Order Summary</h3>
+              <div id="summaryBox">
+                <p class="text-muted mb-0">Loading summary...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script>
+  const API_BASE_URL = "https://localhost:7187/api";
+
+  const form = document.getElementById("checkoutForm");
+  const messageBox = document.getElementById("messageBox");
+  const summaryBox = document.getElementById("summaryBox");
+
+  function getTokenOrRedirect() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      showLoginMessage();
+      return null;
+    }
+
+    return token;
+  }
+
+  function showMessage(type, message) {
+    messageBox.innerHTML = `
+      <div class="alert alert-${type === "success" ? "success" : "danger"}">
+        ${message}
+      </div>
+    `;
+  }
+
+  function showLoginMessage() {
+    messageBox.innerHTML = `
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <h4>Please login first</h4>
+          <p class="text-muted">You need to login before checkout.</p>
+          <a href="login.html" class="btn btn-primary">Login</a>
+        </div>
+      </div>
+    `;
+    form.querySelector("button").disabled = true;
+  }
+
+  async function loadSummary() {
+    const token = getTokenOrRedirect();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Cart`, {
+        headers: { "Authorization": "Bearer " + token }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        showLoginMessage();
+        return;
+      }
+
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+
+      if (!response.ok) {
+        summaryBox.innerHTML = `<p class="text-danger">Could not load summary.</p>`;
+        return;
+      }
+
+      const items = data.items || data.data?.items || [];
+      const total = data.total || data.data?.total || 0;
+
+      if (items.length === 0) {
+        summaryBox.innerHTML = `
+          <p class="text-muted">Your cart is empty.</p>
+          <a href="products.html" class="btn btn-primary w-100">Browse Products</a>
+        `;
+        form.querySelector("button").disabled = true;
+        return;
+      }
+
+      summaryBox.innerHTML = `
+        ${items.map(item => `
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <div>
+              <strong>${item.productName}</strong>
+              <div class="small text-muted">Qty: ${item.quantity}</div>
+            </div>
+            <span>$${item.totalPrice}</span>
+          </div>
+        `).join("")}
+
+        <div class="d-flex justify-content-between mt-4">
+          <h5>Total</h5>
+          <h5>$${total}</h5>
+        </div>
+      `;
+    } catch (error) {
+      console.error(error);
+      summaryBox.innerHTML = `<p class="text-danger">Could not load summary.</p>`;
+    }
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const token = getTokenOrRedirect();
+    if (!token) return;
+
+    const shippingAddress = document.getElementById("shippingAddress").value.trim();
+    const phoneNumber = document.getElementById("phoneNumber").value.trim();
+
+    if (shippingAddress.length < 5) {
+      showMessage("danger", "Shipping address must be at least 5 characters.");
+      return;
+    }
+
+    if (!phoneNumber) {
+      showMessage("danger", "Phone number is required.");
+      return;
+    }
+
+    localStorage.setItem("shippingAddress", shippingAddress);
+    localStorage.setItem("phoneNumber", phoneNumber);
+
+    window.location.href = "payment.html";
+  });
+
+  loadSummary();
+</script>
+
+<script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function renderNavbar() {
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const authArea = document.getElementById("authArea");
+
+    if (!authArea) return;
+
+    if (!token) {
+      authArea.innerHTML = `
+        <a href="login.html" class="nav-link fw-semibold">Login</a>
+        <a href="register.html" class="nav-link fw-semibold">Register</a>
+        <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      `;
+      return;
+    }
+
+    authArea.innerHTML = `
+      ${role === "Admin" ? `<a href="admin.html" class="nav-link fw-semibold">Admin</a>` : ""}
+      <a href="orders.html" class="nav-link fw-semibold">My Orders</a>
+      <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+      <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    `;
+  }
+
+  renderNavbar();
+</script>
+
+<script src="./assets/js/theme.js"></script>
+<script>
+  window.addEventListener("load", function () {
+    document.body.classList.add("app-loaded");
+  });
+</script>
+</body>
+</html>

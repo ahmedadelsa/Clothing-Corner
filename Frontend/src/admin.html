@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Clothing Corner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+  body {
+    visibility: hidden;
+  }
+
+  body.app-loaded {
+    visibility: visible;
+  }
+</style>
+  <script type="module" src="./assets/js/main.js"></script>
+</head>
+
+<body class="font-sans text-gray-800">
+
+  <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+    <div class="container-fluid px-0">
+      <a class="navbar-brand" href="index.html">
+        <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+          <span style="letter-spacing: .12rem;">Clothing Corner</span>
+          <span>Admin</span>
+        </span>
+      </a>
+<div class="mobile-nav-scroll">
+  <ul class="navbar-nav flex-row gap-3">
+    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+    <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+    <li class="nav-item" id="adminNav" style="display:none;">
+      <a class="nav-link" href="admin.html">Admin</a>
+    </li>
+  </ul>
+</div>
+
+<div class="d-flex align-items-center gap-3 flex-wrap" id="authArea"></div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="py-lg-8 py-5 text-center">
+      <div class="container">
+        <h1 class="display-5 mb-3">Admin Dashboard</h1>
+        <p class="text-muted lead">Manage products and orders from one place.</p>
+      </div>
+    </section>
+
+    <section class="py-lg-8 py-5">
+      <div class="container">
+        <div id="messageBox"></div>
+        <div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <h3 class="h5 mb-4">Add Category</h3>
+
+    <form id="categoryForm">
+      <div class="mb-3">
+        <label class="form-label">Category Name</label>
+        <input type="text" id="categoryName" class="form-control" placeholder="Electronics" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" id="categoryDescription" class="form-control" placeholder="Category description">
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Add Category</button>
+    </form>
+  </div>
+</div>
+        <div id="adminContent" style="display:none;">
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                  <h3 class="h5 mb-4">Add Product</h3>
+
+                  <form id="productForm">
+                    <div class="mb-3">
+                      <label class="form-label">Name</label>
+                      <input type="text" id="name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Description</label>
+                      <textarea id="description" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Price</label>
+                      <input type="number" id="price" class="form-control" min="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Stock Quantity</label>
+                      <input type="number" id="stockQuantity" class="form-control" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Image Url</label>
+                      <input type="file" id="productImage" class="form-control" accept="image/*" required>
+                      <img id="imagePreview" class="mt-3 rounded" style="width:120px;height:120px;object-fit:cover;display:none;">
+                    </div>
+
+                    <div class="mb-4">
+                      <label class="form-label">Category Id</label>
+                      <select id="categoryId" class="form-select" required>
+                      <option value="">Select Category</option>
+                      </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Add Product</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 mb-0">Products</h3>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadProducts()">Refresh</button>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table align-middle">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Name</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th>Category</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="productsTable">
+                        <tr><td colspan="6">Loading...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 mb-0">Orders</h3>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadOrders()">Refresh</button>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table align-middle">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Customer</th>
+                          <th>Total</th>
+                          <th>Status</th>
+                          <th>Update</th>
+                        </tr>
+                      </thead>
+                      <tbody id="ordersTable">
+                        <tr><td colspan="5">Loading...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+<script>
+  const API_BASE_URL = "https://localhost:7187/api";
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  let selectedImageBase64 = "";
+
+  const messageBox = document.getElementById("messageBox");
+  const adminContent = document.getElementById("adminContent");
+
+  function showMessage(type, message) {
+    messageBox.innerHTML = `
+      <div class="alert alert-${type === "success" ? "success" : "danger"}">
+        ${message}
+      </div>
+    `;
+
+    setTimeout(() => {
+      messageBox.innerHTML = "";
+    }, 2500);
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function checkAdmin() {
+    if (!token) {
+      messageBox.innerHTML = `
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5">
+            <h4>Please login first</h4>
+            <p class="text-muted">You need to login as Admin to access this page.</p>
+            <a href="login.html" class="btn btn-primary">Login</a>
+          </div>
+        </div>
+      `;
+      return false;
+    }
+
+    if (role !== "Admin") {
+      messageBox.innerHTML = `
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5">
+            <h4>Access Denied</h4>
+            <p class="text-muted">This page is only available for Admin users.</p>
+            <a href="products.html" class="btn btn-primary">Back to Products</a>
+          </div>
+        </div>
+      `;
+      return false;
+    }
+
+    adminContent.style.display = "block";
+    return true;
+  }
+
+  function setupImageUpload() {
+    const imageInput = document.getElementById("productImage");
+    const preview = document.getElementById("imagePreview");
+
+    if (!imageInput) return;
+
+    imageInput.addEventListener("change", function () {
+      const file = this.files[0];
+
+      if (!file) {
+        selectedImageBase64 = "";
+        if (preview) preview.style.display = "none";
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function () {
+        selectedImageBase64 = reader.result;
+
+        if (preview) {
+          preview.src = selectedImageBase64;
+          preview.style.display = "block";
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function loadProducts() {
+    const table = document.getElementById("productsTable");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Products?page=1&pageSize=100`);
+      const result = await response.json();
+
+      const products = result?.data?.products || [];
+
+      if (products.length === 0) {
+        table.innerHTML = `<tr><td colspan="6">No products found.</td></tr>`;
+        return;
+      }
+
+      table.innerHTML = products.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>$${p.price}</td>
+          <td>${p.stockQuantity}</td>
+          <td>${p.categoryName || p.categoryId}</td>
+          <td>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteProduct(${p.id})">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    } catch (error) {
+      console.error(error);
+      table.innerHTML = `<tr><td colspan="6" class="text-danger">Could not load products.</td></tr>`;
+    }
+  }
+
+  async function addProduct(e) {
+    e.preventDefault();
+
+    if (!selectedImageBase64) {
+      showMessage("danger", "Please upload product image");
+      return;
+    }
+
+    const product = {
+      name: document.getElementById("name").value,
+      description: document.getElementById("description").value,
+      price: Number(document.getElementById("price").value),
+      stockQuantity: Number(document.getElementById("stockQuantity").value),
+      imageUrl: selectedImageBase64,
+      categoryId: Number(document.getElementById("categoryId").value)
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(product)
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        showMessage("danger", text || "Could not add product");
+        return;
+      }
+
+      showMessage("success", "Product added successfully ✅");
+
+      document.getElementById("productForm").reset();
+
+      selectedImageBase64 = "";
+      const preview = document.getElementById("imagePreview");
+      if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
+      }
+
+      loadProducts();
+    } catch (error) {
+      console.error(error);
+      showMessage("danger", "API connection error");
+    }
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Products/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      if (!response.ok) {
+        showMessage("danger", "Could not delete product");
+        return;
+      }
+
+      showMessage("success", "Product deleted");
+      loadProducts();
+    } catch (error) {
+      console.error(error);
+      showMessage("danger", "API connection error");
+    }
+  }
+
+  async function loadOrders() {
+    const table = document.getElementById("ordersTable");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Orders`, {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        table.innerHTML = `<tr><td colspan="5" class="text-danger">Could not load orders.</td></tr>`;
+        return;
+      }
+
+      const orders = result.data || [];
+
+      if (orders.length === 0) {
+        table.innerHTML = `<tr><td colspan="5">No orders found.</td></tr>`;
+        return;
+      }
+
+      table.innerHTML = orders.map(o => `
+        <tr>
+          <td>#${o.id}</td>
+          <td>${o.customer}</td>
+          <td>$${o.totalAmount}</td>
+          <td><span class="badge bg-primary">${o.status}</span></td>
+          <td>
+            <select class="form-select form-select-sm" onchange="updateOrderStatus(${o.id}, this.value)">
+              <option value="">Change status</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </td>
+        </tr>
+      `).join("");
+    } catch (error) {
+      console.error(error);
+      table.innerHTML = `<tr><td colspan="5" class="text-danger">API connection error.</td></tr>`;
+    }
+  }
+
+  async function updateOrderStatus(id, status) {
+    if (!status) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Orders/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(status)
+      });
+
+      if (!response.ok) {
+        showMessage("danger", "Could not update order status");
+        return;
+      }
+
+      showMessage("success", "Order status updated");
+      loadOrders();
+    } catch (error) {
+      console.error(error);
+      showMessage("danger", "API connection error");
+    }
+  }
+async function loadCategories() {
+  const select = document.getElementById("categoryId");
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/Categories`);
+    const categories = await response.json();
+
+    select.innerHTML = `<option value="">Select Category</option>`;
+
+    categories.forEach(category => {
+      select.innerHTML += `
+        <option value="${category.id}">${category.name}</option>
+      `;
+    });
+  } catch (error) {
+    console.error(error);
+    showMessage("danger", "Could not load categories");
+  }
+}
+
+async function addCategory(e) {
+  e.preventDefault();
+
+  const category = {
+    name: document.getElementById("categoryName").value,
+    description: document.getElementById("categoryDescription").value
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/Categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(category)
+    });
+
+    if (!response.ok) {
+      showMessage("danger", "Could not add category");
+      return;
+    }
+
+    showMessage("success", "Category added successfully ✅");
+    document.getElementById("categoryForm").reset();
+
+    loadCategories();
+  } catch (error) {
+    console.error(error);
+    showMessage("danger", "API connection error");
+  }
+}
+if (checkAdmin()) {
+  setupImageUpload();
+
+  document.getElementById("productForm").addEventListener("submit", addProduct);
+  document.getElementById("categoryForm").addEventListener("submit", addCategory);
+
+  loadCategories();
+  loadProducts();
+  loadOrders();
+}
+</script>
+<script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function renderNavbar() {
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const authArea = document.getElementById("authArea");
+
+    if (!authArea) return;
+
+    if (!token) {
+      authArea.innerHTML = `
+        <a href="login.html" class="nav-link fw-semibold">Login</a>
+        <a href="register.html" class="nav-link fw-semibold">Register</a>
+        <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      `;
+      return;
+    }
+
+    authArea.innerHTML = `
+      ${role === "Admin" ? `<a href="admin.html" class="nav-link fw-semibold">Admin</a>` : ""}
+      <a href="orders.html" class="nav-link fw-semibold">My Orders</a>
+      <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+      <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    `;
+  }
+
+  renderNavbar();
+</script>
+  <script src="./assets/js/theme.js"></script>
+  <script>
+  window.addEventListener("load", function () {
+    document.body.classList.add("app-loaded");
+  });
+</script>
+</body>
+</html>

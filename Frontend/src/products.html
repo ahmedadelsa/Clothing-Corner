@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Clothing Corner</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+   <style>
+  body {
+    visibility: hidden;
+  }
+
+  body.app-loaded {
+    visibility: visible;
+  }
+</style>
+    <script type="module" src="./assets/js/main.js"></script>
+  
+<style>
+  .product-card {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .product-card .product-img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    object-position: center;
+    background: #f5f5f5;
+  }
+
+  .product-card .card-body {
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-card .product-description {
+    min-height: 44px;
+  }
+
+  .filter-card {
+    border-radius: 14px;
+  }
+
+  .dark-mode .filter-card,
+  .dark-mode .product-card {
+    background-color: #000 !important;
+    border-color: #333 !important;
+  }
+
+  .dark-mode .product-card .product-img {
+    background: #111 !important;
+  }
+</style>
+
+  </head>
+  
+  <body class="font-sans text-gray-800">
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+  <div class="container-fluid px-0">
+    <a class="navbar-brand" href="index.html">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+        <span style="letter-spacing: .12rem;">Clothing Corner</span>
+        <span>Store</span>
+      </span>
+    </a>
+
+<div class="mobile-nav-scroll">
+  <ul class="navbar-nav flex-row gap-3">
+    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+    <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+    <li class="nav-item" id="adminNav" style="display:none;">
+      <a class="nav-link" href="admin.html">Admin</a>
+    </li>
+  </ul>
+</div>
+
+    <div class="d-flex align-items-center gap-3 flex-wrap" id="authArea"></div>
+  </div>
+</nav>
+<main>
+  <section class="py-lg-8 py-5 text-center">
+      <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+        <h1 class="display-5 mb-3">Product List</h1>
+        <p class="text-muted  lead">
+         Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quaerat ad sint quae sunt, molestiae consectetur vitae! Impedit nulla ea provident quis est eos dolores enim.
+        </p>
+        </div>
+        </div>
+      </div>
+    </section>
+     <!-- Page Content -->
+      <section class="py-lg-8 py-5">
+  <div class="container ">
+    <div class="row">
+      <!-- Sidebar Filters -->
+      <aside class="col-lg-3 mb-4">
+        <h3 class="fw-semibold mb-3 h5">Filters</h3>
+
+        <div class="mb-4 bg-light border bg-opacity-50 p-4 filter-card">
+          <h6 class="fw-semibold mb-3 text-xs text-uppercase">Search</h6>
+          <input type="text" id="searchInput" class="form-control" placeholder="Search products...">
+        </div>
+
+        <div class="mb-4 bg-light border bg-opacity-50 p-4 filter-card">
+          <h6 class="fw-semibold mb-3 text-xs text-uppercase">Category</h6>
+          <select id="categoryFilter" class="form-select">
+            <option value="">All Categories</option>
+            <option value="1">Electronics</option>
+            <option value="2">Clothing</option>
+            <option value="3">Books</option>
+          </select>
+        </div>
+
+        <div class="mb-4 bg-light border bg-opacity-50 p-4 filter-card">
+          <h6 class="fw-semibold mb-3 text-xs text-uppercase">Sort</h6>
+          <select id="sortFilter" class="form-select">
+            <option value="">Default</option>
+            <option value="priceAsc">Price: Low to High</option>
+            <option value="priceDesc">Price: High to Low</option>
+          </select>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+          <button class="btn btn-outline-primary" onclick="resetFilters()">Reset</button>
+        </div>
+      </aside>
+
+      <!-- Product Grid -->
+      <div class="col-lg-9">
+        <div class="row g-4">
+            <div class="col-12">
+                <div class=" d-flex flex-column flex-lg-row flex-row justify-content-between gap-4">
+							
+								<div class="col-sm-4 col-lg-3 offset-lg-9">
+									<select id="topSortFilter" class="form-select" onchange="syncTopSortAndApply()">
+                    <option value="">Sort by: Featured</option>
+                    <option value="priceAsc">Price, low to high</option>
+                    <option value="priceDesc">Price, high to low</option>
+                  </select>
+							</div>
+
+            </div>
+            </div>
+          <!-- Dynamic Product Cards -->
+          <div id="productsContainer" class="row g-4 w-100"></div>
+          <!-- Add more cards as needed -->
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+       <footer class="bg-dark  pt-8 footer">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-4 col-md-4 col-12">
+              <a class="navbar-brand" href="#">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+      <span class="" style="letter-spacing: .12rem;">Clothig Corner</span>
+    </span></a>
+            </div>
+          <div class="col-lg-8 col-md-6 mb-4 d-flex justify-content-start justify-content-md-end gy-4">
+            <ul class="list-unstyled lh-lg d-flex flex-column flex-md-row gap-4">
+            <li><a href="index.html" class=" ft-links text-decoration-none">Home</a></li>
+            <li><a href="products.html" class=" ft-links text-decoration-none">Products</a></li>
+            </ul>
+          </div>
+          <div class="row justify-content-center align-items-center pt-lg-8 pb-4">
+          <div class="col-lg-6 col-md-6 mb-4">
+            <h2 class="display-3 text-white">We Design all over the world</h2>
+          
+          </div>
+          
+          
+          <div class="col-lg-6 col-md-6 mb-4">
+           <div class="d-flex gap-3 justify-content-start justify-content-lg-end">
+            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="btn btn-outline-light btn-icon"><i class="bi bi-linkedin"></i></a>
+            </div>
+          </div>
+          </div>
+          
+          
+          <div class="col-lg-6 col-md-6 mb-4">
+           <div class="d-flex gap-3 justify-content-lg-end">
+           <a href="mailto:ahmedadela2006@gmail.com" class="btn btn-outline-light">Contact us</a>
+            </div>
+          </div>
+          </div>
+          <hr class="bg-secondary">
+          <div class="row pb-3">
+          <div class="col-md-6 text-center text-md-start">
+            <p class=" mb-0">&copy; 2025 Clothing Corner. Developed by <a href="linkedin.com/in/ahmed-adel-1st/?lipi=urn%3Ali%3Apage%3Ad_flagship3_feed%3BEFxOOPeQQACZ69GidaUtHQ%3D%3D" class="text-white" target="_blank">Ahmed Adel</a>  All rights reserved.</p>
+          </div>
+          <div class="col-md-6 text-center text-md-end">
+            <a href="#" class=" ft-links text-decoration-none me-3">Privacy Policy</a>
+            <a href="#" class=" ft-links text-decoration-none">Terms of Service</a>
+          </div>
+          </div>
+        </div>
+        </footer>
+        <div class="position-fixed end-0 bottom-0 m-4 z-1">
+        </div>
+        
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+  <div class="offcanvas-header px-4">
+     <a class="navbar-brand" href="#">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+      <span class="" style="letter-spacing: .12rem;">Clothing Corner</span>
+    </span></a>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    
+    <div class="navbar-custom">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+         <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="index.html">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="about.html">About us</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="products.html">Products</a>
+        </li>
+          <li class="nav-item">
+          <a class="nav-link" href="testimonials.html">Testimonials</a>
+        </li>
+         
+
+        <li class="nav-item">
+          <a class="nav-link " href="contact.html" >Contact</a>
+        </li>
+      </ul>
+      </div>
+  </div>
+</div>
+  
+<script src="./assets/js/theme.js"></script>
+
+<script>
+  const API_BASE_URL = "https://localhost:7187/api";
+  let currentPage = 1;
+  const pageSize = 12;
+
+  function getProductImage(imageUrl, index = 0) {
+    if (!imageUrl) return `./assets/images/product-img-${(index % 7) + 1}.jpg`;
+
+    if (
+      imageUrl.startsWith("http://") ||
+      imageUrl.startsWith("https://") ||
+      imageUrl.startsWith("data:image")
+    ) {
+      return imageUrl;
+    }
+
+    return `./assets/images/${imageUrl}`;
+  }
+
+  function showToast(message, type = "success") {
+    const oldToast = document.getElementById("appToast");
+    if (oldToast) oldToast.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "appToast";
+    toast.className = `alert alert-${type === "success" ? "success" : "danger"} position-fixed top-0 end-0 m-4 shadow`;
+    toast.style.zIndex = "9999";
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  function buildProductsUrl() {
+    const search = document.getElementById("searchInput")?.value || "";
+    const categoryId = document.getElementById("categoryFilter")?.value || "";
+    const sortBy = document.getElementById("sortFilter")?.value || "";
+
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (categoryId) params.append("categoryId", categoryId);
+    if (sortBy) params.append("sortBy", sortBy);
+    params.append("page", currentPage);
+    params.append("pageSize", pageSize);
+
+    return `${API_BASE_URL}/Products?${params.toString()}`;
+  }
+
+  async function loadProducts() {
+    const container = document.getElementById("productsContainer");
+
+    try {
+      container.innerHTML = `<div class="col-12"><p class="text-muted">Loading products...</p></div>`;
+
+      const response = await fetch(buildProductsUrl());
+      const result = await response.json();
+
+      const products = result?.data?.products || [];
+      const totalCount = result?.data?.totalCount || 0;
+      const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+      if (products.length === 0) {
+        container.innerHTML = `<div class="col-12"><p class="text-muted">No products found.</p></div>`;
+        renderPagination(totalPages);
+        return;
+      }
+
+      container.innerHTML = products.map((product, index) => `
+        <div class="col-sm-6 col-md-4">
+          <div class="card product-card h-100">
+            <a href="#">
+              <img 
+                src="${getProductImage(product.imageUrl, index)}" 
+                onerror="this.onerror=null; this.src='./assets/images/product-img-${(index % 7) + 1}.jpg'" 
+                class="card-img-top product-img" 
+                alt="${product.name}">
+            </a>
+            <div class="card-body">
+              <p class="text-muted mb-2 text-uppercase text-xs mb-3">${product.categoryName || "Product"}</p>
+              <div class="mb-3 flex-grow-1">
+                <h3 class="h5 mb-1"><a href="#">${product.name}</a></h3>
+                <p class="small text-muted mb-2 product-description">${product.description || ""}</p>
+                <div>
+                  <span class="fw-semibold">$${product.price}</span>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm mt-auto" onclick="addToCart(${product.id})">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      renderPagination(totalPages);
+    } catch (error) {
+      console.error(error);
+      container.innerHTML = `
+        <div class="col-12">
+          <div class="alert alert-danger">
+            Could not load products. Make sure the API is running.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function renderPagination(totalPages) {
+    const pagination = document.getElementById("pagination");
+    if (!pagination) return;
+
+    let pagesHtml = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      pagesHtml += `
+        <li class="page-item ${i === currentPage ? "active" : ""}">
+          <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+        </li>
+      `;
+    }
+
+    pagination.innerHTML = `
+      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+        <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">«</a>
+      </li>
+      ${pagesHtml}
+      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+        <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">»</a>
+      </li>
+    `;
+  }
+
+  function goToPage(page) {
+    if (page < 1) return;
+    currentPage = page;
+    loadProducts();
+  }
+
+  function applyFilters() {
+    currentPage = 1;
+
+    const topSort = document.getElementById("topSortFilter");
+    const sideSort = document.getElementById("sortFilter");
+    if (topSort && sideSort) topSort.value = sideSort.value;
+
+    loadProducts();
+  }
+
+  function resetFilters() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("categoryFilter").value = "";
+    document.getElementById("sortFilter").value = "";
+
+    const topSort = document.getElementById("topSortFilter");
+    if (topSort) topSort.value = "";
+
+    currentPage = 1;
+    loadProducts();
+  }
+
+  function syncTopSortAndApply() {
+    const topSort = document.getElementById("topSortFilter");
+    const sideSort = document.getElementById("sortFilter");
+
+    if (topSort && sideSort) sideSort.value = topSort.value;
+
+    currentPage = 1;
+    loadProducts();
+  }
+
+  async function addToCart(productId) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      showToast("Please login first", "danger");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 900);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Cart/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          productId: productId,
+          quantity: 1
+        })
+      });
+
+      const text = await response.text();
+
+      if (response.ok) {
+        showToast("Product added to cart ✅");
+        return;
+      }
+
+      showToast(text || "Could not add product to cart", "danger");
+    } catch (error) {
+      console.error(error);
+      showToast("API connection error", "danger");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener("keyup", function (event) {
+        if (event.key === "Enter") applyFilters();
+      });
+    }
+
+    loadProducts();
+  });
+</script>
+<script>
+  const userRole = localStorage.getItem("role");
+  const adminNav = document.getElementById("adminNav");
+
+  if (adminNav && userRole === "Admin") {
+    adminNav.style.display = "block";
+  }
+</script>
+    <script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function renderNavbar() {
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const authArea = document.getElementById("authArea");
+
+    if (!authArea) return;
+
+    if (!token) {
+      authArea.innerHTML = `
+        <a href="login.html" class="nav-link fw-semibold">Login</a>
+        <a href="register.html" class="nav-link fw-semibold">Register</a>
+        <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      `;
+      return;
+    }
+
+    authArea.innerHTML = `
+      ${role === "Admin" ? `<a href="admin.html" class="nav-link fw-semibold">Admin</a>` : ""}
+      <a href="orders.html" class="nav-link fw-semibold">My Orders</a>
+      <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+      <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    `;
+  }
+
+  renderNavbar();
+</script>
+<script>
+  window.addEventListener("load", function () {
+    document.body.classList.add("app-loaded");
+  });
+</script>
+  </body>
+</html>

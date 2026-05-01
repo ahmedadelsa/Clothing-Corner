@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cart - Clothing Corner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+  body {
+    visibility: hidden;
+  }
+
+  body.app-loaded {
+    visibility: visible;
+  }
+</style>
+  <script type="module" src="./assets/js/main.js"></script>
+</head>
+
+<body class="font-sans text-gray-800">
+
+  <!-- Navbar -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+  <div class="container-fluid px-0">
+    <a class="navbar-brand" href="index.html">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+        <span style="letter-spacing: .12rem;">Clothing Corner</span>
+        <span>Store</span>
+      </span>
+    </a>
+
+<div class="mobile-nav-scroll">
+  <ul class="navbar-nav flex-row gap-3">
+    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+    <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+    <li class="nav-item" id="adminNav" style="display:none;">
+      <a class="nav-link" href="admin.html">Admin</a>
+    </li>
+  </ul>
+</div>
+
+    <div class="d-flex align-items-center gap-3 flex-wrap" id="authArea"></div>
+  </div>
+</nav>
+
+  <!-- Title -->
+  <section class="py-5 text-center">
+    <h1 class="display-5">🛒 Your Cart</h1>
+  </section>
+
+  <!-- Cart -->
+  <div class="container">
+    <div id="cartContainer" class="card p-4 shadow-sm"></div>
+
+    <div class="text-center mt-4">
+      <button onclick="goToCheckout()" class="btn btn-primary px-5 py-2">
+        Checkout
+      </button>
+    </div>
+  </div>
+
+<script>
+  const API_BASE_URL = "https://localhost:7187/api";
+
+  function showLoginMessage(container) {
+    container.innerHTML = `
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <h4>Please login first</h4>
+          <p class="text-muted">You need to login to view your cart.</p>
+          <a href="login.html" class="btn btn-primary">Login</a>
+        </div>
+      </div>
+    `;
+  }
+
+function getImage(item, index) {
+  if (item.imageUrl && item.imageUrl.startsWith("data:image")) {
+    return item.imageUrl;
+  }
+
+  if (item.imageUrl && item.imageUrl.startsWith("http")) {
+    return item.imageUrl;
+  }
+
+  if (item.imageUrl) {
+    return `./assets/images/${item.imageUrl}`;
+  }
+
+  return `./assets/images/product-img-${(index % 7) + 1}.jpg`;
+}
+
+  async function loadCart() {
+    const container = document.getElementById("cartContainer");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      showLoginMessage(container);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Cart`, {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        showLoginMessage(container);
+        return;
+      }
+
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+
+      if (!response.ok) {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            Could not load cart.
+          </div>
+        `;
+        return;
+      }
+
+      const items = data.items || data.data?.items || [];
+      const total = data.total || data.data?.total || 0;
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <h4>Your cart is empty</h4>
+            <p class="text-muted">Go to products and add something.</p>
+            <a href="products.html" class="btn btn-primary">Browse Products</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        ${items.map((item, index) => `
+          <div class="d-flex align-items-center justify-content-between border-bottom py-3">
+  <div class="d-flex align-items-center gap-3">
+    <img src="${getImage(item, index)}"
+         onerror="this.src='./assets/images/product-img-${(index % 7) + 1}.jpg'"
+         style="width:80px;height:80px;object-fit:cover;border-radius:10px;" />
+
+    <div>
+      <h5 class="mb-1">${item.productName}</h5>
+      <p class="mb-1 text-muted">Price: $${item.price}</p>
+      <p class="mb-0 text-muted">Item Total: $${item.totalPrice}</p>
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    <input 
+      type="number" 
+      min="1" 
+      value="${item.quantity}" 
+      class="form-control form-control-sm" 
+      style="width:80px"
+      onchange="updateQuantity(${item.productId}, this.value)"
+    />
+
+    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(${item.productId})">
+      Remove
+    </button>
+  </div>
+</div>
+        `).join("")}
+
+        <div class="d-flex justify-content-between mt-4">
+          <h4>Total</h4>
+          <h4>$${total}</h4>
+        </div>
+
+        <div class="text-center mt-4">
+          <button onclick="window.location.href='checkout.html'" class="btn btn-primary px-5 py-2">
+            Checkout
+          </button>
+        </div>
+      `;
+    } catch (error) {
+      console.error(error);
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          API connection error.
+        </div>
+      `;
+    }
+  }
+
+  loadCart();
+</script>
+<script>
+  const userRole = localStorage.getItem("role");
+  const adminNav = document.getElementById("adminNav");
+
+  if (adminNav && userRole === "Admin") {
+    adminNav.style.display = "block";
+  }
+</script>
+<script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function renderNavbar() {
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const authArea = document.getElementById("authArea");
+
+    if (!authArea) return;
+
+    if (!token) {
+      authArea.innerHTML = `
+        <a href="login.html" class="nav-link fw-semibold">Login</a>
+        <a href="register.html" class="nav-link fw-semibold">Register</a>
+        <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      `;
+      return;
+    }
+
+    authArea.innerHTML = `
+      ${role === "Admin" ? `<a href="admin.html" class="nav-link fw-semibold">Admin</a>` : ""}
+      <a href="orders.html" class="nav-link fw-semibold">My Orders</a>
+      <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+      <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    `;
+  }
+async function updateQuantity(productId, quantity) {
+  const token = localStorage.getItem("token");
+
+  quantity = Number(quantity);
+
+  if (quantity <= 0) {
+    alert("Quantity must be greater than zero");
+    loadCart();
+    return;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/Cart/update`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      productId,
+      quantity
+    })
+  });
+
+  if (response.ok) {
+    loadCart();
+  } else {
+    alert("Could not update quantity");
+  }
+}
+
+async function removeItem(productId) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE_URL}/Cart/remove/${productId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  if (response.ok) {
+    loadCart();
+  } else {
+    alert("Could not remove item");
+  }
+}
+  renderNavbar();
+</script>
+  <script src="./assets/js/theme.js"></script>
+<script>
+  window.addEventListener("load", function () {
+    document.body.classList.add("app-loaded");
+  });
+</script>
+</body>
+</html>

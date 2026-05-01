@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Orders - Clothing Corner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+  body {
+    visibility: hidden;
+  }
+
+  body.app-loaded {
+    visibility: visible;
+  }
+</style>
+  <script type="module" src="./assets/js/main.js"></script>
+</head>
+
+<body class="font-sans text-gray-800">
+
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+  <div class="container-fluid px-0">
+    <a class="navbar-brand" href="index.html">
+      <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+        <span style="letter-spacing: .12rem;">Clothing Corner</span>
+        <span>Store</span>
+      </span>
+    </a>
+
+<div class="mobile-nav-scroll">
+  <ul class="navbar-nav flex-row gap-3">
+    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+    <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+    <li class="nav-item" id="adminNav" style="display:none;">
+      <a class="nav-link" href="admin.html">Admin</a>
+    </li>
+  </ul>
+</div>
+
+<div class="d-flex align-items-center gap-3 flex-wrap" id="authArea"></div>
+  </div>
+</nav>
+
+  <main>
+    <section class="py-lg-8 py-5 text-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-6">
+            <h1 class="display-5 mb-3">My Orders</h1>
+            <p class="text-muted lead">Track your orders and view your order details.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-lg-8 py-5">
+      <div class="container">
+        <div id="ordersContainer">
+          <p class="text-muted">Loading orders...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+<script>
+  const API_BASE_URL = "https://localhost:7187/api";
+
+  function formatDate(dateText) {
+    const date = new Date(dateText);
+    return date.toLocaleString();
+  }
+
+  function showLoginMessage(container) {
+    container.innerHTML = `
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <h4>Please login first</h4>
+          <p class="text-muted">You need to login to view your orders.</p>
+          <a href="login.html" class="btn btn-primary">Login</a>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadOrders() {
+    const container = document.getElementById("ordersContainer");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      showLoginMessage(container);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Orders/my-orders`, {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        showLoginMessage(container);
+        return;
+      }
+
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : null;
+
+      if (!response.ok || !result?.success) {
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            ${result?.message || "Could not load orders"}
+          </div>
+        `;
+        return;
+      }
+
+      const orders = result.data || [];
+
+      if (orders.length === 0) {
+        container.innerHTML = `
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+              <h4>No orders yet</h4>
+              <p class="text-muted">Start shopping and place your first order.</p>
+              <a href="products.html" class="btn btn-primary">Browse Products</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = orders.map(order => `
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+              <div>
+                <h3 class="h5 mb-1">Order #${order.id}</h3>
+                <p class="text-muted mb-0">${formatDate(order.createdAt)}</p>
+              </div>
+
+              <div class="text-md-end">
+                <span class="badge ${
+                  order.status === "Delivered" ? "bg-success" :
+                  order.status === "Shipped" ? "bg-info" :
+                  order.status === "Cancelled" ? "bg-danger" :
+                  "bg-warning"
+                } mb-2">
+                  ${order.status}
+                </span>
+                <h4 class="h5 mb-0">$${order.totalAmount}</h4>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${order.items.map(item => `
+                    <tr>
+                      <td>${item.productName}</td>
+                      <td>${item.quantity}</td>
+                      <td>$${item.price}</td>
+                      <td>$${item.totalPrice}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 text-muted small">
+              Shipping: ${order.shippingAddress} • Phone: ${order.phoneNumber}
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+    } catch (error) {
+      console.error(error);
+      container.innerHTML = `
+        <div class="alert alert-danger">
+          API connection error.
+        </div>
+      `;
+    }
+  }
+
+  loadOrders();
+</script>
+<script>
+  const userRole = localStorage.getItem("role");
+  const adminNav = document.getElementById("adminNav");
+
+  if (adminNav && userRole === "Admin") {
+    adminNav.style.display = "block";
+  }
+</script>
+<script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function renderNavbar() {
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const authArea = document.getElementById("authArea");
+
+    if (!authArea) return;
+
+    if (!token) {
+      authArea.innerHTML = `
+        <a href="login.html" class="nav-link fw-semibold">Login</a>
+        <a href="register.html" class="nav-link fw-semibold">Register</a>
+        <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      `;
+      return;
+    }
+
+    authArea.innerHTML = `
+      ${role === "Admin" ? `<a href="admin.html" class="nav-link fw-semibold">Admin</a>` : ""}
+      <a href="orders.html" class="nav-link fw-semibold">My Orders</a>
+      <button onclick="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
+      <button onclick="toggleTheme()" id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    `;
+  }
+
+  renderNavbar();
+</script>
+<script src="./assets/js/theme.js"></script>
+<script>
+  window.addEventListener("load", function () {
+    document.body.classList.add("app-loaded");
+  });
+</script>
+</body>
+</html>
